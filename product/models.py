@@ -54,7 +54,7 @@ class ProductReview(models.Model):
     image_url  = models.URLField(max_length=2000, null=True)
     rate       = models.IntegerField()
     created_at = models.DateTimeField(auto_now_add=True)
-    like_user  = models.ManyToManyField('user.User', through='ReviewLike', related_name='product_like_user')
+    like_user  = models.ManyToManyField('user.User', through='ReviewLike', related_name='user_like_product')
 
     class Meta:
         db_table = 'product_reviews'
@@ -101,13 +101,13 @@ class DeliveryPeriod(models.Model):
         db_table = 'delivery_periods'
 
 class DeliveryFee(models.Model):
-    won = models.IntegerField(unique=True)
+    fee = models.IntegerField(unique=True)
 
     class Meta:
         db_table = 'delivery_fees'
 
-class DeliveryMethod(models.Model):
+class DeliveryType(models.Model):
     name = models.CharField(max_length=45, unique=True)
 
     class Meta:
-        db_table = 'delivery_methods'
+        db_table = 'delivery_types'
