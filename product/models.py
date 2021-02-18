@@ -89,7 +89,7 @@ class ProductColor(models.Model):
 class ProductDelivery(models.Model):
     period = models.ForeignKey('DeliveryPeriod', on_delete=models.CASCADE)
     fee    = models.ForeignKey('DeliveryFee', on_delete=models.CASCADE, null=True)
-    method = models.ForeignKey('DeliveryMethod', on_delete=models.CASCADE)
+    method = models.ForeignKey('DeliveryType', on_delete=models.CASCADE)
 
     class Meta:
         db_table = 'product_deliveries'
