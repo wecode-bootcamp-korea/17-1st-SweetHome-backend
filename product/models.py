@@ -54,7 +54,7 @@ class ProductReview(models.Model):
     image_url  = models.URLField(max_length=2000, null=True)
     rate       = models.IntegerField()
     created_at = models.DateTimeField(auto_now_add=True)
-    like_user  = models.ManyToManyField('user.User', through='ReviewLike', related_name='user_like_product')
+    like_user  = models.ManyToManyField('user.User', through='ReviewLike', related_name='user_like_review')
 
     class Meta:
         db_table = 'product_reviews'
