@@ -12,30 +12,32 @@ class Posting(models.Model):
     housing    = models.ForeignKey('PostingHousing', on_delete=models.CASCADE)
     style      = models.ForeignKey('PostingStyle', on_delete=models.CASCADE)
     space      = models.ForeignKey('PostingSpace', on_delete=models.CASCADE)
+    like_user  = models.ManyToManyField('user.User', through='PostingLike', related_name='posting_like_user')
+    scrap_user = models.ManyToManyField('user.User', through='PostingScrap', related_name='posting_scrap_user')
 
     class Meta:
         db_table = 'postings'
 
 class PostingSize(models.Model):
-    name = models.CharField(max_length=45)
+    name = models.CharField(max_length=45, unique=True)
 
     class Meta:
         db_table = 'posting_sizes'
 
 class PostingHousing(models.Model):
-    name = models.CharField(max_length=45)
+    name = models.CharField(max_length=45, unique=True)
 
     class Meta:
         db_table = 'posting_housings'
 
 class PostingStyle(models.Model):
-    name = models.CharField(max_length=45)
+    name = models.CharField(max_length=45, unique=True)
 
     class Meta:
         db_table = 'posting_styles'
 
 class PostingSpace(models.Model):
-    name = models.CharField(max_length=45)
+    name = models.CharField(max_length=45, unique=True)
 
     class Meta:
         db_table = 'posting_spaces'

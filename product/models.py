@@ -3,20 +3,20 @@ from django.db import models
 from user.models import User
 
 class Category(models.Model):
-    name = models.CharField(max_length=45)
+    name = models.CharField(max_length=45, unique=True)
 
     class Meta:
         db_table = 'categories'
 
 class SubCategory(models.Model):
-    name     = models.CharField(max_length=45)
+    name     = models.CharField(max_length=45, unique=True)
     category = models.ForeignKey('Category', on_delete=models.CASCADE)
 
     class Meta:
         db_table = 'sub_categories'
 
 class DetailCategory(models.Model):
-    name         = models.CharField(max_length=45)
+    name         = models.CharField(max_length=45, unique=True)
     sub_category = models.ForeignKey('SubCategory', on_delete=models.CASCADE)
 
     class Meta:
@@ -24,7 +24,7 @@ class DetailCategory(models.Model):
 
 class Product(models.Model):
     detail_category     = models.ForeignKey('DetailCategory', on_delete=models.CASCADE)
-    name                = models.CharField(max_length=45)
+    name                = models.CharField(max_length=45, unique=True)
     original_price      = models.DecimalField(decimal_places=2, max_digits=12)
     discount_percentage = models.DecimalField(decimal_places=2, max_digits=5, null=True)
     created_at          = models.DateTimeField(auto_now_add=True)
@@ -42,7 +42,7 @@ class ProductImage(models.Model):
         db_table = 'product_images'
 
 class ProductCompany(models.Model):
-    name = models.CharField(max_length=45)
+    name = models.CharField(max_length=45, unique=True)
 
     class Meta:
         db_table = 'product_companies'
@@ -54,6 +54,7 @@ class ProductReview(models.Model):
     image_url  = models.URLField(max_length=2000, null=True)
     rate       = models.IntegerField()
     created_at = models.DateTimeField(auto_now_add=True)
+    like_user  = models.ManyToManyField('user.User', through='ReviewLike', related_name='product_like_user')
 
     class Meta:
         db_table = 'product_reviews'
@@ -74,13 +75,13 @@ class ProductOption(models.Model):
         db_table = 'product_options'
 
 class ProductSize(models.Model):
-    name = models.CharField(max_length=45)
+    name = models.CharField(max_length=45, unique=True)
 
     class Meta:
         db_table = 'product_sizes'
 
 class ProductColor(models.Model):
-    name = models.CharField(max_length=45)
+    name = models.CharField(max_length=45, unique=True)
 
     class Meta:
         db_table = 'product_colors'
@@ -94,19 +95,19 @@ class ProductDelivery(models.Model):
         db_table = 'product_deliveries'
 
 class DeliveryPeriod(models.Model):
-    day = models.IntegerField()
+    day = models.IntegerField(unique=True)
 
     class Meta:
         db_table = 'delivery_periods'
 
 class DeliveryFee(models.Model):
-    won = models.IntegerField()
+    won = models.IntegerField(unique=True)
 
     class Meta:
         db_table = 'delivery_fees'
 
 class DeliveryMethod(models.Model):
-    name = models.CharField(max_length=45)
+    name = models.CharField(max_length=45, unique=True)
 
     class Meta:
         db_table = 'delivery_methods'
