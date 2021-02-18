@@ -12,8 +12,8 @@ class Posting(models.Model):
     housing    = models.ForeignKey('PostingHousing', on_delete=models.CASCADE)
     style      = models.ForeignKey('PostingStyle', on_delete=models.CASCADE)
     space      = models.ForeignKey('PostingSpace', on_delete=models.CASCADE)
-    like_user  = models.ManyToManyField('user.User', through='PostingLike', related_name='user_posting_like')
-    scrap_user = models.ManyToManyField('user.User', through='PostingScrap', related_name='user_posting_scrap')
+    like_user  = models.ManyToManyField('user.User', through='PostingLike', related_name='user_like_posting')
+    scrap_user = models.ManyToManyField('user.User', through='PostingScrap', related_name='user_scrap_posting')
 
     class Meta:
         db_table = 'postings'
