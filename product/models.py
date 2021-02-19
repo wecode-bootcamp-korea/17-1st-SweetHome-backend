@@ -9,14 +9,14 @@ class Category(models.Model):
         db_table = 'categories'
 
 class SubCategory(models.Model):
-    name     = models.CharField(max_length=45, unique=True)
+    name     = models.CharField(max_length=45)
     category = models.ForeignKey('Category', on_delete=models.CASCADE)
 
     class Meta:
         db_table = 'sub_categories'
 
 class DetailCategory(models.Model):
-    name         = models.CharField(max_length=45, unique=True)
+    name         = models.CharField(max_length=45)
     sub_category = models.ForeignKey('SubCategory', on_delete=models.CASCADE)
 
     class Meta:
