@@ -101,7 +101,7 @@ class DeliveryPeriod(models.Model):
         db_table = 'delivery_periods'
 
 class DeliveryFee(models.Model):
-    fee = models.IntegerField(unique=True)
+    price = models.IntegerField(unique=True)
 
     class Meta:
         db_table = 'delivery_fees'
