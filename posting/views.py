@@ -1,5 +1,6 @@
 from django.http            import JsonResponse
 from django.views           import View
+from django.db.models       import Count
 
 from user.models    import User
 from posting.models import (
@@ -9,7 +10,8 @@ from posting.models import (
         PostingStyle,
         PostingSpace,
         PostingLike,
-        PostingComment
+        PostingComment,
+        PostingScrap
 )
 
 class PostingView(View):
@@ -21,6 +23,17 @@ class PostingView(View):
         f_space = request.GET.get('space_id', None)
 
         postings = Posting.objects.all()
+        postings = postings.annotate(like_num=Count("postinglike"))
+        postings = postings.annotate(comment_num=Count("comment"))
+        
+        if sort == 'most_popular':
+            postings = postings.order_by('-comment_num')
+        if sort == 'most_like':
+            postings = postings.order_by('-like_num')
+        if sort == 'recent':
+            postings = postings.order_by('created_at')
+        if sort == 'old':
+            postings = postings.order_by('-created_at')
 
         if f_size:
             postings = postings.filter(size_id=f_size)
@@ -39,27 +52,20 @@ class PostingView(View):
                 "card_image"                : posting.image_url,
                 "card_content"              : posting.content,
                 "comment_num"               : PostingComment.objects.filter(posting_id=posting.id).count() if posting.comment.exists() else 0,
-                "comment_user_image"        : posting.comment.first().user.image_url if posting.comment.exists() else "None",
-                "comment_user_name"         : posting.comment.first().user.name if posting.comment.exists() else "None",
-                "comment_content"           : posting.comment.first().content if posting.comment.exists() else "None",
-                "posting_like"              : PostingLike.objects.filter(posting_id=posting.id).count(),
+                "comment_user_image"        : posting.comment.first().user.image_url if posting.comment.exists() else None,
+                "comment_user_name"         : posting.comment.first().user.name if posting.comment.exists() else None,
+                "comment_content"           : posting.comment.first().content if posting.comment.exists() else None,
+                "like_num"                  : PostingLike.objects.filter(posting_id=posting.id).count() if posting.postinglike_set.exists() else 0,
+                "scrap_num"                 : PostingScrap.objects.filter(posting_id=posting.id).count() if posting.postingscrap_set.exists() else 0,
                 "created_at"                : posting.created_at
                 } for posting in postings
         ]
-        if sort == 'most_popular':
-            posting_list = sorted(posting_list, key=lambda posting: (posting["comment_num"]), reverse=True)
-        if sort == 'most_like':
-            posting_list = sorted(posting_list, key=lambda posting: (posting["posting_like"]), reverse=True)
-        if sort == 'recent':
-            posting_list = sorted(posting_list, key=lambda posting: (posting["created_at"]), reverse=True)
-        if sort == 'old':
-            posting_list = sorted(posting_list, key=lambda posting: (posting["created_at"]))
 
+        sortings = [{"id" : 1, "name" : "역대인기순"}, {"id" : 2, "name" : "댓글많은순"}, {"id" : 3, "name" : "최신순"}, {"id" : 4, "name" : "오래된순"}]
         sizes  = PostingSize.objects.values()
         styles  = PostingSize.objects.values()
         housings = PostingHousing.objects.values()
         spaces = PostingSpace.objects.values()
-        sortings = [{"id" : 1, "name" : "역대인기순"}, {"id" : 2, "name" : "최신순"}, {"id" : 3, "name" : "댓글많은순"}]
         filter_condition = {
                 "categories" : [
                     {
