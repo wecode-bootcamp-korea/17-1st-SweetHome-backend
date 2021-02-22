@@ -25,15 +25,17 @@ class PostingView(View):
         postings = Posting.objects.all()
         postings = postings.annotate(like_num=Count("postinglike"))
         postings = postings.annotate(comment_num=Count("comment"))
-        
-        if sort == 'most_popular':
-            postings = postings.order_by('-comment_num')
-        if sort == 'most_like':
-            postings = postings.order_by('-like_num')
-        if sort == 'recent':
-            postings = postings.order_by('created_at')
-        if sort == 'old':
-            postings = postings.order_by('-created_at')
+        postings = postings.annotate(scrap_num=Count("postingscrap"))
+        sort_prefixes = {
+                "like"      : "-like_num",
+                "popular"   : "-comment_num",
+                "scrap"     : "-scrap_num",
+                "recent"    : "-created_at",
+                "old"       : "created_at"
+                }
+        for condition in sort_prefixes.keys():
+            if condition == sort:
+                postings = postings.order_by(sort_prefixes.get(condition))
 
         if f_size:
             postings = postings.filter(size_id=f_size)
@@ -61,7 +63,7 @@ class PostingView(View):
                 } for posting in postings
         ]
 
-        sortings = [{"id" : 1, "name" : "역대인기순"}, {"id" : 2, "name" : "댓글많은순"}, {"id" : 3, "name" : "최신순"}, {"id" : 4, "name" : "오래된순"}]
+        sortings = [{"id" : 1, "name" : "역대인기순"}, {"id" : 2, "name" : "댓글많은순"}, {"id" : 3, "name" : "스크랩많은순"} {"id" : 4, "name" : "최신순"}, {"id" : 5, "name" : "오래된순"}]
         sizes  = PostingSize.objects.values()
         styles  = PostingSize.objects.values()
         housings = PostingHousing.objects.values()
