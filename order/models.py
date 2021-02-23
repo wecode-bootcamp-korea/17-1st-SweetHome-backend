@@ -4,8 +4,8 @@ from user.models    import User
 from product.models import ProductOption
 
 class Order(models.Model):
-    user                   = models.ForeignKey('user.User', on_delete=models.SET_NULL)
-    status                 = models.ForeignKey('OrderStatus', on_delete=models.SET_NULL)
+    user                   = models.ForeignKey('user.User', on_delete=models.CASCADE)
+    status                 = models.ForeignKey('OrderStatus', on_delete=models.CASCADE)
     created_at             = models.DateTimeField(auto_now_add=True)
     sender_name            = models.CharField(max_length=45, null=True)
     sender_email           = models.CharField(max_length=45, null=True)
@@ -30,6 +30,6 @@ class OrderProduct(models.Model):
     created_at     = models.DateTimeField(auto_now_add=True)
     updated_at     = models.DateTimeField(auto_now=True)
     order          = models.ForeignKey('Order', on_delete=models.SET_NULL, null=True)
-    
+
     class Meta:
         db_table = 'order_products'
