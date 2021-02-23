@@ -50,12 +50,12 @@ class PostingView(View):
                 "card_user_introduction"    : posting.user.description,
                 "card_image"                : posting.image_url,
                 "card_content"              : posting.content,
-                "comment_num"               : PostingComment.objects.filter(posting_id=posting.id).count() if posting.comment.exists() else 0,
+                "comment_num"               : posting.comment.filter(posting_id=posting.id).count() if posting.comment.exists() else 0,
                 "comment_user_image"        : posting.comment.first().user.image_url if posting.comment.exists() else None,
                 "comment_user_name"         : posting.comment.first().user.name if posting.comment.exists() else None,
                 "comment_content"           : posting.comment.first().content if posting.comment.exists() else None,
-                "like_num"                  : PostingLike.objects.filter(posting_id=posting.id).count() if posting.postinglike_set.exists() else 0,
-                "scrap_num"                 : PostingScrap.objects.filter(posting_id=posting.id).count() if posting.postingscrap_set.exists() else 0,
+                "like_num"                  : posting.postinglike_set.filter(posting_id=posting.id).count() if posting.postinglike_set.exists() else 0,
+                "scrap_num"                 : posting.postingscrap_set.filter(posting_id=posting.id).count() if posting.postingscrap_set.exists() else 0,
                 "created_at"                : posting.created_at
                 } for posting in postings
         ]
