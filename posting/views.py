@@ -16,12 +16,12 @@ from posting.models import (
 
 class PostingView(View):
     def get(self, request):
-        postings = Posting.objects.all()
+        postings        = Posting.objects.all()
+        sort_request    = request.GET.get('sort', 'recent')
+        postings        = postings.annotate(like_num=Count("postinglike"))
+        postings        = postings.annotate(comment_num=Count("comment"))
+        postings        = postings.annotate(scrap_num=Count("postingscrap"))
         
-        sort_request = request.GET.get('sort', None)
-        postings = postings.annotate(like_num=Count("postinglike"))
-        postings = postings.annotate(comment_num=Count("comment"))
-        postings = postings.annotate(scrap_num=Count("postingscrap"))
         sort_prefixes = {
                 "like"      : "-like_num",
                 "popular"   : "-comment_num",
@@ -29,8 +29,6 @@ class PostingView(View):
                 "recent"    : "-created_at",
                 "old"       : "created_at"
                 }
-        if sort_request in sort_prefixes:
-            postings = postings.order_by(sort_prefixes[sort_request])
 
         filter_prefixes = {
                 'size_id'       : 'size_id__in',
@@ -38,10 +36,14 @@ class PostingView(View):
                 'style_id'      : 'style_id__in',
                 'space_id'      : 'space_id__in'
                 }
-        filter_set = {filter_prefixes.ge(key) : value for (key, value) in dict(request.GET).items() if filter_prefixes.get(key)}
-        postings = postings.filter(**filter_set)
+        filter_set = {
+                filter_prefixes.get(key) : value for (key, value) in dict(request.GET).items() 
+                if filter_prefixes.get(key)
+                }
 
-        posting_list    = [{
+        postings = postings.filter(**filter_set).order_by(sort_prefixes[sort_request])
+
+        posting_list = [{
                 "id"                        : posting.id,
                 "card_user_image"           : posting.user.image_url,
                 "card_user_name"            : posting.user.name,
@@ -57,14 +59,13 @@ class PostingView(View):
                 "created_at"                : posting.created_at
                 } for posting in postings
         ]
+        return JsonResponse({'message' : posting_list}, status=200)
 
+class CategoryView(View):
+    def get(self, request):
         sortings    = [{"id" : 1, "name" : "역대인기순"}, {"id" : 2, "name" : "댓글많은순"}, {"id" : 3, "name" : "스크랩많은순"}, {"id" : 4, "name" : "최신순"}, {"id" : 5, "name" : "오래된순"}]
-        sizes       = PostingSize.objects.values()
-        styles      = PostingSize.objects.values()
-        housings    = PostingHousing.objects.values()
-        spaces      = PostingSpace.objects.values()
         
-        filter_condition = {
+        category_condition = {
                 "categories" : [
                     {
                         "id" : 1,
@@ -74,22 +75,22 @@ class PostingView(View):
                     {
                         "id" : 2,
                         "categoryName" : "주거형태",
-                        "category" : [name for name in list(housings)]
+                        "category" : [name for name in list(PostingHousing.objects.values())]
                     },
                     {
                         "id" : 3,
                         "categoryName" : "공간",
-                        "category" : [name for name in list(spaces)]
+                        "category" : [name for name in list(PostingSpace.objects.values())]
                     },
                     {
                         "id" : 4,
                         "categoryName" : "평수",
-                        "category" : [name for name in list(sizes)]
+                        "category" : [name for name in list(PostingSize.objects.values())]
                     },
                     {
                         "id" : 5,
                         "categoryName" : "스타일",
-                        "category" : [name for name in list(styles)]
+                        "category" : [name for name in list(PostingStyle.objects.values())]
                     }]
                 }
-        return JsonResponse({'message' : posting_list, "message2" : filter_condition}, status=200)
+        return JsonResponse({'categories' : category_condition}, status=200)
