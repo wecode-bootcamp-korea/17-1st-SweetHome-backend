@@ -38,7 +38,6 @@ class ProductReviewView(View):
                         "review_image"     : product_review.image_url,
                         "review_rate"      : product_review.rate,
                         "product_name"     : product.name,
-                        "created_at"       : product_review.created_at,
                         "day"              : str(product_review.created_at).split(" ")[0],
                         "review_user_name" : product_review.user.name,
                         "review_like"      : product_review.review_like,
