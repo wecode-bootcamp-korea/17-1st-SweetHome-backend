@@ -2,10 +2,9 @@ import json
 
 from django.http      import JsonResponse
 from django.views     import View
-from django.db.models import Q
-from django.db.utils  import DataError
+from django.db.models import Q, Count
 
-from product.models import *
+from product.models import Product, ProductReview, ReviewLike
 
 class ProductReviewView(View):
     def get(self, request, product_id):
@@ -22,39 +21,28 @@ class ProductReviewView(View):
                 q.add(Q(product=product), q.AND)
             else:
                 q = Q(product=product)
-            
-            product_reviews = ProductReview.objects.filter(q)
-            
-            if not product_reviews:
-                return JsonResponse({'message':'NO_REVIEWS'}, status=200)
-
-            results = []
-
-            for product_review in product_reviews:
-                results.append(
-                    {
-                        "review_id":product_review.id,
-                        "review_content":product_review.content,
-                        "review_image":product_review.image_url,
-                        "review_rate":product_review.rate,
-                        "product_name":product.name,
-                        "created_at":product_review.created_at,
-                        "review_user_name":product_review.user.name,
-                        "review_like":ReviewLike.objects.filter(review=product_review).count(),
-                    }
-                )
 
             order_dict = {
-                'old':'created_at',
-                'recent':'created_at',
-                'like':'review_like',
+                'old'   :'created_at',
+                'recent':'-created_at',
+                'like'  :'-review_like',
             }
-            
-            if order in order_dict:
-                results.sort(key=lambda result: result[order_dict[order]], reverse=True)
 
-            if order == "old":
-                results = results[::-1]
+            if order in order_dict:
+                product_reviews = ProductReview.objects.filter(q)\
+                    .annotate(review_like=Count('reviewlike')).order_by(order_dict[order])
+            
+            results = [{
+                        "review_id"        : product_review.id,
+                        "review_content"   : product_review.content,
+                        "review_image"     : product_review.image_url,
+                        "review_rate"      : product_review.rate,
+                        "product_name"     : product.name,
+                        "created_at"       : product_review.created_at,
+                        "day"              : str(product_review.created_at).split(" ")[0],
+                        "review_user_name" : product_review.user.name,
+                        "review_like"      : product_review.review_like,
+                    } for product_review in product_reviews]
 
             return JsonResponse({'results':results}, status=200)
 
@@ -64,8 +52,5 @@ class ProductReviewView(View):
         except KeyError:
             return JsonResponse({'message':'KEY_ERROR'}, status=400)
         
-        except DataError:
-            return JsonResponse({'message':'DATA_ERROR'}, status=400)
-
         except Product.DoesNotExist:
             return JsonResponse({'message':'PRODUCT_DOES_NOT_EXIST'}, status=400)
