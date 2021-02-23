@@ -16,11 +16,7 @@ from posting.models import (
 
 class PostingView(View):
     def get(self, request):
-        sort = request.GET.get('sort', None)
-        f_size = request.GET.get('size_id', None)
-        f_housing = request.GET.get('housing_id', None)
-        f_style = request.GET.get('style_id', None)
-        f_space = request.GET.get('space_id', None)
+        sort_request = request.GET.get('sort', None)
 
         postings = Posting.objects.all()
         postings = postings.annotate(like_num=Count("postinglike"))
@@ -33,18 +29,17 @@ class PostingView(View):
                 "recent"    : "-created_at",
                 "old"       : "created_at"
                 }
-        for condition in sort_prefixes.keys():
-            if condition == sort:
-                postings = postings.order_by(sort_prefixes.get(condition))
+        if sort_request in sort_prefixes:
+            postings = postings.order_by(sort_prefixes[sort_request])
 
-        if f_size:
-            postings = postings.filter(size_id=f_size)
-        if f_housing:
-            postings = postings.filter(housing_id=f_housing)
-        if f_style:
-            postings = postings.filter(style_id=f_style)
-        if f_space:
-            postings = postings.filter(space_id=f_space)
+        filter_prefixes = {
+                'size_id'       : 'size_id__in',
+                'housing_id'    : 'housing_id__in',
+                'style_id'      : 'style_id__in',
+                'space_id'      : 'space_id__in'
+                }
+        filter_set = {filter_prefixes.ge(key) : value for (key, value) in dict(request.GET).items() if filter_prefixes.get(key)}
+        postings = postings.filter(**filter_set)
 
         posting_list    = [{
                 "id"                        : posting.id,
@@ -63,7 +58,7 @@ class PostingView(View):
                 } for posting in postings
         ]
 
-        sortings = [{"id" : 1, "name" : "역대인기순"}, {"id" : 2, "name" : "댓글많은순"}, {"id" : 3, "name" : "스크랩많은순"} {"id" : 4, "name" : "최신순"}, {"id" : 5, "name" : "오래된순"}]
+        sortings = [{"id" : 1, "name" : "역대인기순"}, {"id" : 2, "name" : "댓글많은순"}, {"id" : 3, "name" : "스크랩많은순"}, {"id" : 4, "name" : "최신순"}, {"id" : 5, "name" : "오래된순"}]
         sizes  = PostingSize.objects.values()
         styles  = PostingSize.objects.values()
         housings = PostingHousing.objects.values()
