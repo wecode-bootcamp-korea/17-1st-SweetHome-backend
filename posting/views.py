@@ -16,9 +16,9 @@ from posting.models import (
 
 class PostingView(View):
     def get(self, request):
-        sort_request = request.GET.get('sort', None)
-
         postings = Posting.objects.all()
+        
+        sort_request = request.GET.get('sort', None)
         postings = postings.annotate(like_num=Count("postinglike"))
         postings = postings.annotate(comment_num=Count("comment"))
         postings = postings.annotate(scrap_num=Count("postingscrap"))
@@ -58,11 +58,12 @@ class PostingView(View):
                 } for posting in postings
         ]
 
-        sortings = [{"id" : 1, "name" : "역대인기순"}, {"id" : 2, "name" : "댓글많은순"}, {"id" : 3, "name" : "스크랩많은순"}, {"id" : 4, "name" : "최신순"}, {"id" : 5, "name" : "오래된순"}]
-        sizes  = PostingSize.objects.values()
-        styles  = PostingSize.objects.values()
-        housings = PostingHousing.objects.values()
-        spaces = PostingSpace.objects.values()
+        sortings    = [{"id" : 1, "name" : "역대인기순"}, {"id" : 2, "name" : "댓글많은순"}, {"id" : 3, "name" : "스크랩많은순"}, {"id" : 4, "name" : "최신순"}, {"id" : 5, "name" : "오래된순"}]
+        sizes       = PostingSize.objects.values()
+        styles      = PostingSize.objects.values()
+        housings    = PostingHousing.objects.values()
+        spaces      = PostingSpace.objects.values()
+        
         filter_condition = {
                 "categories" : [
                     {
