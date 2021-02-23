@@ -1,36 +1,43 @@
 from django.http      import JsonResponse
 from django.views     import View
-from django.db.models import Avg
+from django.db.models import Avg, Count
 
 from product.models import Product
 
 class ProductView(View):
     def get(self, request):
-        category        = request.GET.get('category', None)
-        sub_category    = request.GET.get('subcategory', None)
-        detail_category = request.GET.get('detailcategory', None)
-        order           = request.GET.get('order', None)
-        color           = request.GET.get('color', None)
-        size            = request.GET.get('size', None)
+        order = request.GET.get('order', None)
 
         products = Product.objects.all()
+        
+        filter_prefixes = {
+            'category'       : 'detail_category__sub_category__category__in',
+            'subcategory'    : 'detail_category__sub_category__in',
+            'detailcategory' : 'detail_category__in',
+            'color'          : 'productoption__color__in',
+            'size'           : 'productoption__size__in'
+        }
 
-        if category:
-            products = Product.objects.filter(detail_category__sub_category__category=category)
+        filter_set = {filter_prefixes.get(key) : value for (key, value) in dict(request.GET).items()\
+                      if filter_prefixes.get(key)}
+        
+        products = products.filter(**filter_set).distinct()
+        
+        order_by_time  = {'recent':'created_at', 'old':'-created_at'}
+        order_by_price = {'min_price':'discount_price', 'max_price':'-discount_price'}
 
-        if sub_category:
-            products = products.filter(detail_category__sub_category=sub_category)
+        if order in order_by_time:
+            products = products.order_by(order_by_time[order])
 
-        if detail_category:
-            products = products.filter(detail_category=detail_category)
+        if order in order_by_price:
+            products = products.extra(
+                    select={'discount_price': 'original_price * (100 - discount_percentage) / 100'}).order_by(
+                    order_by_price[order])
 
-        if color:
-            products = products.filter(productoption__color_id=color).distinct()
+        if order == 'review':
+            products = products.annotate(review_count=Count('productreview')).order_by('-review_count')
 
-        if size:
-            products = products.filter(productoption__size_id=size).distinct()
-
-        product_list = [{
+        products_list = [{
             'id'                  : product.id,
             'name'                : product.name,
             'discount_percentage' : int(product.discount_percentage),
@@ -38,27 +45,32 @@ class ProductView(View):
             'company'             : product.company.name,
             'image'               : product.productimage_set.first().image_url,
             'rate_average'        : round(product.productreview_set.aggregate(Avg('rate'))['rate__avg'], 1)\
-                    if product.productreview_set.aggregate(Avg('rate'))['rate__avg'] else None,
+                    if product.productreview_set.aggregate(Avg('rate'))['rate__avg'] else 0,
             'review_count'        : product.productreview_set.count(),
-            'is_free_delivery'    : True if product.delivery.fee.price == 0 else False,
-            'is_on_sale'          : True if int(product.discount_percentage) != 0 else False,
-            'created_at'          : product.created_at
+            'is_free_delivery'    : not product.delivery.fee.price == 0,
+            'is_on_sale'          : int(product.discount_percentage) == 0,
             } for product in products
         ]
+        
+        DISCOUNT_PROUDCTS_COUNT = 5
 
-        if order == 'recent':
-            product_list = sorted(product_list, key=lambda product: product['created_at'], reverse=True)
+        discount_products = products.order_by('-discount_percentage')[:DISCOUNT_PROUDCTS_COUNT]
 
-        if order == 'old':
-            product_list = sorted(product_list, key=lambda product: product['created_at'])
+        discount_products_list = [{
+            'id'                  : product.id,
+            'name'                : product.name,
+            'discount_percentage' : int(product.discount_percentage),
+            'discount_price'      : int(product.original_price) * (100 - int(product.discount_percentage)) // 100,
+            'company'             : product.company.name,
+            'image'               : product.productimage_set.first().image_url,
+            'rate_average'        : round(product.productreview_set.aggregate(Avg('rate'))['rate__avg'], 1) \
+                if product.productreview_set.aggregate(Avg('rate'))['rate__avg'] else 0,
+            'review_count'        : product.productreview_set.count(),
+            'is_free_delivery'    : product.delivery.fee.price == 0,
+            'is_on_sale'          : not int(product.discount_percentage) == 0,
+            } for product in discount_products
+        ]
 
-        if order == 'min_price':
-            product_list = sorted(product_list, key=lambda product: product['discount_price'])
+        products_count = products.count()
 
-        if order == 'max_price':
-            product_list = sorted(product_list, key=lambda product: product['discount_price'], reverse=True)
-
-        if order == 'review':
-            product_list = sorted(product_list, key=lambda product: product['review_count'], reverse=True)
-
-        return JsonResponse({'message': product_list}, status=200)
+        return JsonResponse({'message' : products_list, 'discount' : discount_products_list, 'count' : products_count}, status=200)
