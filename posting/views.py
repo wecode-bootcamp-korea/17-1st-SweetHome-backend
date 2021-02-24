@@ -1,8 +1,11 @@
+import json
+
 from django.http            import JsonResponse
 from django.views           import View
 from django.db.models       import Count
 
 from user.models    import User
+from user.utils     import login_decorator
 from posting.models import (
         Posting,
         PostingSize,
@@ -16,7 +19,7 @@ from posting.models import (
 
 class PostingView(View):
     def get(self, request):
-        postings        = Posting.objects.all()
+        postings        = Posting.objects.prefetch_related('comment').select_related('user').all()
         order_request   = request.GET.get('order', 'recent')
         postings        = postings.annotate(
                             like_num=Count("postinglike"),
@@ -107,3 +110,20 @@ class CategoryView(View):
                     }]
                 }
         return JsonResponse({'categories' : category_condition}, status=200)
+
+class PostingLikeView(View):
+    @login_decorator
+    def post(self, request):
+        user = request.user
+        data = json.loads(request.body)
+        posting_id = data['posting_id']
+
+        posting = Posting.objects.get(id=posting_id)
+
+        if posting.like_user.filter(id=user.id).exists():
+            posting = PostingLike.objects.filter(user_id=user.id, posting_id=posting_id)
+            posting.delete()
+            return JsonResponse({'message' : 'SUCCESS'}, status=204)
+
+        posting.like_user.add(User.objects.get(id=user.id))
+        return JsonResponse({'message' : 'SUCCESS'}, status=201)
