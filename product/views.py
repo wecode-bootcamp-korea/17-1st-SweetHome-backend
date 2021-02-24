@@ -83,7 +83,7 @@ class ProductDetailView(View):
             'company'             : product.company.name,
             'image'               : [i.image_url for i in product.productimage_set.all()],
             'rate_average'        : round(product.productreview_set.aggregate(Avg('rate'))['rate__avg'], 1)\
-                if product.productreview_set.aggregate(Avg('rate'))['rate__avg'] else None,
+                if product.productreview_set.aggregate(Avg('rate'))['rate__avg'] else 0,
             'review_count'        : product.productreview_set.count(),
             'delivery_type'       : product.delivery.method.name,
             'delivery_period'     : product.delivery.period.day,
