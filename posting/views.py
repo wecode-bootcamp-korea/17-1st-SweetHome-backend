@@ -77,28 +77,33 @@ class CategoryView(View):
                 "categories" : [
                     {
                         "id" : 1,
-                        "categoryName" : "정렬",
-                        "category" : [name for name in list(sortings)]
+                        "categoryName"  : "정렬",
+                        "categoryEName" : "order",
+                        "category"      : [name for name in list(sortings)]
                         },
                     {
                         "id" : 2,
-                        "categoryName" : "주거형태",
-                        "category" : [name for name in list(PostingHousing.objects.values().order_by('id'))]
+                        "categoryName"  : "주거형태",
+                        "categoryEName" : "housing",
+                        "category"      : [name for name in list(PostingHousing.objects.values().order_by('id'))]
                     },
                     {
                         "id" : 3,
-                        "categoryName" : "공간",
-                        "category" : [name for name in list(PostingSpace.objects.values().order_by('id'))]
+                        "categoryName"  : "공간",
+                        "categoryEName" : "space",
+                        "category"      : [name for name in list(PostingSpace.objects.values().order_by('id'))]
                     },
                     {
                         "id" : 4,
-                        "categoryName" : "평수",
-                        "category" : [name for name in list(PostingSize.objects.values().order_by('id'))]
+                        "categoryName"  : "평수",
+                        "categoryEName" : "size",
+                        "category"      : [name for name in list(PostingSize.objects.values().order_by('id'))]
                     },
                     {
                         "id" : 5,
-                        "categoryName" : "스타일",
-                        "category" : [name for name in list(PostingStyle.objects.values().order_by('id'))]
+                        "categoryName"  : "스타일",
+                        "categoryEName" : "style",
+                        "category"      : [name for name in list(PostingStyle.objects.values().order_by('id'))]
                     }]
                 }
         return JsonResponse({'categories' : category_condition}, status=200)
