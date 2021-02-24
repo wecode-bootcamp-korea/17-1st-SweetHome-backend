@@ -28,7 +28,7 @@ class PostingView(View):
                             )
         
         order_prefixes = {
-                "like"      : "-like_num",
+                "best"      : "-like_num",
                 "popular"   : "-comment_num",
                 "scrap"     : "-scrap_num",
                 "recent"    : "-created_at",
@@ -66,14 +66,32 @@ class PostingView(View):
         ]
         return JsonResponse({'message' : posting_list}, status=200)
 
+    @login_decorator
+    def post(self, request):
+        try:
+            user        = request.user
+            data        = json.loads(request.body)
+            size_id     = PostingSize.objects.get(id=data['size']).id
+            housing_id  = PostingHousing.objects.get(id=data['housing']).id
+            style_id    = PostingStyle.objects.get(id=data['style']).id
+            space_id    = PostingSpace.objects.get(id=data['space']).id
+            image_url   = data['card_image']
+            content     = data['card_content']
+
+            Posting.objects.create(user_id=user.id, image_url=image_url, content=content, size_id=size_id, housing_id=housing_id, style_id=style_id, space_id=space_id)
+            return JsonResponse({'message' : 'SUCCESS'}, status=201)
+
+        except KeyError:
+            return JsonResponse({'message' : 'KEY_ERROR'}, status=400)
+
 class CategoryView(View):
     def get(self, request):
         sortings    = [
-                {"id" : 1, "name" : "역대인기순"},
-                {"id" : 2, "name" : "댓글많은순"},
-                {"id" : 3, "name" : "스크랩많은순"},
-                {"id" : 4, "name" : "최신순"},
-                {"id" : 5, "name" : "오래된순"}
+                {"id" : 1, "name" : "역대인기순", "Ename" : "best"},
+                {"id" : 2, "name" : "댓글많은순", "Ename" : "popular"},
+                {"id" : 3, "name" : "스크랩많은순", "Ename" : "scrap"},
+                {"id" : 4, "name" : "최신순", "Ename" : "recent"},
+                {"id" : 5, "name" : "오래된순", "Ename" : "old"}
         ]
         
         category_condition = {
