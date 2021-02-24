@@ -17,12 +17,14 @@ from posting.models import (
 class PostingView(View):
     def get(self, request):
         postings        = Posting.objects.all()
-        sort_request    = request.GET.get('sort', 'recent')
-        postings        = postings.annotate(like_num=Count("postinglike"))
-        postings        = postings.annotate(comment_num=Count("comment"))
-        postings        = postings.annotate(scrap_num=Count("postingscrap"))
+        order_request   = request.GET.get('order', 'recent')
+        postings        = postings.annotate(
+                            like_num=Count("postinglike"),
+                            comment_num=Count("comment"),
+                            scrap_num=Count("postingscrap")
+                            )
         
-        sort_prefixes = {
+        order_prefixes = {
                 "like"      : "-like_num",
                 "popular"   : "-comment_num",
                 "scrap"     : "-scrap_num",
@@ -41,7 +43,7 @@ class PostingView(View):
                 if filter_prefixes.get(key)
                 }
 
-        postings = postings.filter(**filter_set).order_by(sort_prefixes[sort_request])
+        postings = postings.filter(**filter_set).order_by(order_prefixes[order_request])
 
         posting_list = [{
                 "id"                        : posting.id,
@@ -63,7 +65,13 @@ class PostingView(View):
 
 class CategoryView(View):
     def get(self, request):
-        sortings    = [{"id" : 1, "name" : "역대인기순"}, {"id" : 2, "name" : "댓글많은순"}, {"id" : 3, "name" : "스크랩많은순"}, {"id" : 4, "name" : "최신순"}, {"id" : 5, "name" : "오래된순"}]
+        sortings    = [
+                {"id" : 1, "name" : "역대인기순"},
+                {"id" : 2, "name" : "댓글많은순"},
+                {"id" : 3, "name" : "스크랩많은순"},
+                {"id" : 4, "name" : "최신순"},
+                {"id" : 5, "name" : "오래된순"}
+        ]
         
         category_condition = {
                 "categories" : [
@@ -75,22 +83,22 @@ class CategoryView(View):
                     {
                         "id" : 2,
                         "categoryName" : "주거형태",
-                        "category" : [name for name in list(PostingHousing.objects.values())]
+                        "category" : [name for name in list(PostingHousing.objects.values().order_by('id'))]
                     },
                     {
                         "id" : 3,
                         "categoryName" : "공간",
-                        "category" : [name for name in list(PostingSpace.objects.values())]
+                        "category" : [name for name in list(PostingSpace.objects.values().order_by('id'))]
                     },
                     {
                         "id" : 4,
                         "categoryName" : "평수",
-                        "category" : [name for name in list(PostingSize.objects.values())]
+                        "category" : [name for name in list(PostingSize.objects.values().order_by('id'))]
                     },
                     {
                         "id" : 5,
                         "categoryName" : "스타일",
-                        "category" : [name for name in list(PostingStyle.objects.values())]
+                        "category" : [name for name in list(PostingStyle.objects.values().order_by('id'))]
                     }]
                 }
         return JsonResponse({'categories' : category_condition}, status=200)
