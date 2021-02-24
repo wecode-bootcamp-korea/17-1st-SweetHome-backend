@@ -33,10 +33,10 @@ class PostingView(View):
                 }
 
         filter_prefixes = {
-                'size_id'       : 'size_id__in',
-                'housing_id'    : 'housing_id__in',
-                'style_id'      : 'style_id__in',
-                'space_id'      : 'space_id__in'
+                'housing'    : 'housing_id__in',
+                'space'      : 'space_id__in',
+                'size'       : 'size_id__in',
+                'style'      : 'style_id__in'
                 }
         filter_set = {
                 filter_prefixes.get(key) : value for (key, value) in dict(request.GET).items() 
