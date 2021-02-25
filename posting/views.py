@@ -156,3 +156,18 @@ class PostingLikeView(View):
 
         posting.like_user.add(User.objects.get(id=user.id))
         return JsonResponse({'message' : 'SUCCESS'}, status=201)
+
+ class PostingScrapView(View):
+    @login_decorator
+    def post(self, request):
+        data       = json.loads(request.body)
+        user       = request.user
+        posting_id = data['posting_id']
+
+        if PostingScrap.objects.filter(user_id=user.id, posting_id=posting_id):
+            PostingScrap.objects.filter(user_id=user.id, posting_id=posting_id).delete()
+            return JsonResponse({'message' : 'SUCCESS'}, status=204)
+
+        PostingScrap.objects.create(user_id=user.id, posting_id=posting_id)
+        return JsonResponse({'message' : 'SUCCESS'}, status=201)
+
