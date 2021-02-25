@@ -7,7 +7,7 @@ from django.db.utils  import DataError
 
 from user.models    import User
 from user.utils     import login_decorator
-from order.models   import OrderStatus, OrderProduct
+from order.models   import Order, OrderStatus, OrderProduct
 from product.models import Product
 
 class OrderProductView(View):
