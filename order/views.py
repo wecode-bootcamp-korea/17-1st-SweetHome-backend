@@ -21,23 +21,22 @@ class OrderProductView(View):
             order = Order.objects.get(Q(user=user)&Q(status=1))
             
             order_products  = order.orderproduct_set.all()
-            product_tuple = [(i, i.product_option, i.product_option.product) for i in order_products]
 
             results = [
             {
-                "product_id"             : product.id, 
-                "product_option_id"      : product_option.id,
-                "product_name"           : product.name,
-                "product_color"          : product_option.color.name,
-                "product_size"           : product_option.size.name,
+                "product_id"             : order_product.id, 
+                "product_option_id"      : order_product.product_option.id,
+                "product_name"           : order_product.product_option.product.name,
+                "product_color"          : order_product.product_option.color.name,
+                "product_size"           : order_product.product_option.size.name,
                 "quantity"               : order_product.quantity,
-                "product_original_price" : product.original_price,
-                "product_image"          : product.productimage_set.all()[0].image_url,
-                "product_price"          : product.original_price * (100 - product.discount_percentage) / 100,
-                "product_company"        : product.company.name,
-                "product_delivery_type"  : product.delivery.method.name,
-                "product_delivery_fee"   : product.delivery.fee.price,
-            } for (order_product, product_option, product) in product_tuple]
+                "product_original_price" : order_product.product_option.product.original_price,
+                "product_image"          : order_product.product_option.product.productimage_set.all()[0].image_url,
+                "product_price"          : order_product.product_option.product.original_price * (100 - product.discount_percentage) / 100,
+                "product_company"        : order_product.product_option.product.company.name,
+                "product_delivery_type"  : order_product.product_option.product.delivery.method.name,
+                "product_delivery_fee"   : order_product.product_option.product.delivery.fee.price,
+            } for order_product in order_products]
             
             return JsonResponse({'results':results}, status=200)
 
@@ -70,23 +69,22 @@ class OrderProductView(View):
 
                 order           = Order.objects.get(Q(user=user)&Q(status=1))
                 order_products  = order.orderproduct_set.all()
-                product_tuple   = [(i, i.product_option, i.product_option.product) for i in order_products]
 
                 results = [
                 {
-                    "product_id"             : product.id, 
-                    "product_option_id"      : product_option.id,
-                    "product_name"           : product.name,
-                    "product_color"          : product_option.color.name,
-                    "product_size"           : product_option.size.name,
+                    "product_id"             : order_product.id, 
+                    "product_option_id"      : order_product.product_option.id,
+                    "product_name"           : order_product.product_option.product.name,
+                    "product_color"          : order_product.product_option.color.name,
+                    "product_size"           : order_product.product_option.size.name,
                     "quantity"               : order_product.quantity,
-                    "product_original_price" : product.original_price,
-                    "product_image"          : product.productimage_set.all()[0].image_url,
-                    "product_price"          : product.original_price * (100 - product.discount_percentage) / 100,
-                    "product_company"        : product.company.name,
-                    "product_delivery_type"  : product.delivery.method.name,
-                    "product_delivery_fee"   : product.delivery.fee.price,
-                } for (order_product, product_option, product) in product_tuple]
+                    "product_original_price" : order_product.product_option.product.original_price,
+                    "product_image"          : order_product.product_option.product.productimage_set.all()[0].image_url,
+                    "product_price"          : order_product.product_option.product.original_price * (100 - product.discount_percentage) / 100,
+                    "product_company"        : order_product.product_option.product.company.name,
+                    "product_delivery_type"  : order_product.product_option.product.delivery.method.name,
+                    "product_delivery_fee"   : order_product.product_option.product.delivery.fee.price,
+                } for order_product in order_products]
 
                 return JsonResponse({'message':results}, status=200)
 
