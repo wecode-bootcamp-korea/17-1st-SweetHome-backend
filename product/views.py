@@ -114,7 +114,7 @@ class ProductCartView(View):
             product_option = ProductOption.objects.get(
                 product=Product.objects.get(id=product_id),color=color, size=size
             )
-            order = Order.objects.create(user=user, status=OrderStatus.objects.get(id=1))
+            order = Order.objects.create(user=user, status_id=1)
 
             if OrderProduct.objects.filter(order=order, product_option=product_option, order__status=1).exists(): 
                 order_products = OrderProduct.objects.filter(order=order, product_option=product_option)
