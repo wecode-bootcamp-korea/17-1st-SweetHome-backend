@@ -1,13 +1,11 @@
 import json
-import jwt
 
 from django.http            import JsonResponse
 from django.views           import View
 from django.db.models       import Count
 
-from my_settings    import SECRET_KEY, ALGORITHM
 from user.models    import User
-from user.utils     import login_decorator
+from user.utils     import login_decorator, non_user_accept_decorator
 from posting.models import (
         Posting,
         PostingSize,
@@ -20,7 +18,7 @@ from posting.models import (
 )
 
 class PostingView(View):
-    @login_decorator
+    @non_user_accept_decorator
     def get(self, request):
         user            = request.user
         postings        = Posting.objects.prefetch_related('comment').select_related('user').all()
@@ -51,7 +49,7 @@ class PostingView(View):
                 }
 
         postings = postings.filter(**filter_set).order_by(order_prefixes[order_request])
-
+        
         posting_list = [{
                 "id"                        : posting.id,
                 "card_user_image"           : posting.user.image_url,
