@@ -55,26 +55,22 @@ class OrderProductView(View):
         try:
             user = request.user
 
-            if request.body:
-                data = json.loads(request.body)
-                product_option_id = data['id']
-                quantity = data['quantity']
+            data = json.loads(request.body)
+            product_option_id = data['id']
+            quantity = data['quantity']
+            total_price = data['total_price']
 
             if product_option_id:
-                email    = 'a@gmail.com'
-                password = '111122222'
-                user = User.objects.get(email=email)
-                
                 order_product          = OrderProduct.objects.get(Q(product_option_id=product_option_id)&Q(order__status=1))
                 order_product.quantity = quantity
                 order_product.save()
 
                 if not Order.objects.filter(Q(user=user)&Q(status=1)).exists():
                     return JsonResponse({'message':'NO_PRODUCTS'}, status=200)
-                order = Order.objects.get(Q(user=user)&Q(status=1))
-                
+
+                order           = Order.objects.get(Q(user=user)&Q(status=1))
                 order_products  = order.orderproduct_set.all()
-                product_tuple = [(i, i.product_option, i.product_option.product) for i in order_products]
+                product_tuple   = [(i, i.product_option, i.product_option.product) for i in order_products]
 
                 results = [
                 {
@@ -94,9 +90,6 @@ class OrderProductView(View):
 
                 return JsonResponse({'message':results}, status=200)
 
-            data     = json.loads(request.body)
-
-            total_price = data.get('total_price')
             order = Order.objects.get(Q(user=user)&Q(status=1))
             order.total_price = total_price
             order.save()
