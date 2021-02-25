@@ -1,9 +1,11 @@
 import json
+import jwt
 
 from django.http            import JsonResponse
 from django.views           import View
 from django.db.models       import Count
 
+from my_settings    import SECRET_KEY, ALGORITHM
 from user.models    import User
 from user.utils     import login_decorator
 from posting.models import (
@@ -18,9 +20,12 @@ from posting.models import (
 )
 
 class PostingView(View):
-    @login_decorator
     def get(self, request):
-        user            = request.user
+        access_token    = request.header.get('Authorizaiton', None)
+        if access_token : 
+            payload = jwt.decode(access_token, SECRET_KEY, algorithms=ALGORITHM)
+            user    = User.objects.get(id=payload['user_id'])
+        
         postings        = Posting.objects.prefetch_related('comment').select_related('user').all()
         order_request   = request.GET.get('order', 'recent')
         postings        = postings.annotate(
