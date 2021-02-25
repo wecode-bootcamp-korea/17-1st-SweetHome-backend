@@ -9,10 +9,27 @@ from user.utils     import login_decorator
 from product.models import (
   Product, 
   ProductReview, 
-  ReviewLike
+  ReviewLike,
+  Category
 )
 
 DISCOUNT_PROUDCTS_COUNT = 5
+
+class CategoryView(View):
+    def get(self, request):
+        category_list = [{
+            'id': category.id,
+            'name': category.name,
+            'sub_category': [{
+                'id': sub_category.id,
+                'name': sub_category.name,
+                'detail_category' : [{
+                    'id': detail_category.id,
+                    'name': detail_category.name
+                } for detail_category in sub_category.detailcategory_set.all()]
+            } for sub_category in category.subcategory_set.all()]
+        } for category in Category.objects.all().order_by('id')]
+        return JsonResponse({'categories': category_list}, status=200)
 
 class ProductView(View):
     def get(self, request):
