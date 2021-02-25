@@ -30,7 +30,9 @@ class ProductView(View):
                 filter_prefixes.get(key) : value for (key, value) in dict(request.GET).items() if filter_prefixes.get(key)
             }
             
-            products = Product.objects.filter(**filter_set).distinct()
+            products = Product.objects.select_related(
+                'company', 'delivery__fee').filter(**filter_set).prefetch_related(
+                'productimage_set', 'productreview_set').distinct()
             
             order_by_time  = {'recent' : 'created_at', 'old' : '-created_at'}
             order_by_price = {'min_price' : 'discount_price', 'max_price' : '-discount_price'}
