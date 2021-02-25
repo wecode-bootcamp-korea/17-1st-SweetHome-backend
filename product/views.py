@@ -98,29 +98,31 @@ class ProductView(View):
             return JsonResponse({'message' : 'INVALID_VALUE'}, status=400)
 
 class ProductCartView(View):
-    @login_decorator
+    # @login_decorator
     def post(self, request):
         try:
-            user = request.user
-
+            # user = request.user
+            user = User.objects.get(id=1)
+            data       = json.loads(request.body)
+            color      = ProductColor.objects.get(name=data['color'])
+            size       = ProductSize.objects.get(name=data['size'])
+            product_id = data['id']
+            
             if not Product.objects.filter(id=product_id).exists():
                 return JsonResponse({'message':'INVALID_PRODUCT'}, status=404)
             
-            data     = json.loads(request.body)
-            color    = ProductColor.objects.get(name=data['color'])
-            size     = ProductSize.objects.get(name=data['size'])
             quantity = int(data['quantity'])
-            product  = Product.objects.get(id=data['id'])
+            product  = Product.objects.get(id=product_id)
             
             if not ProductOption.objects.filter(
-                product=Product.objects.get(id=product_id),color=color, size=size
+                product=product,color=color, size=size
             ).exists():
                 return JsonResponse({'message':'INVALID_PRODUCT_OPTION'}, status=404)
 
             product_option = ProductOption.objects.get(
-                product=Product.objects.get(id=product_id),color=color, size=size
+                product=product,color=color, size=size
             )
-            order = Order.objects.create(user=user, status_id=1)
+            order = Order.objects.update_or_create(user=user, status_id=1)[0]
 
             if OrderProduct.objects.filter(order=order, product_option=product_option, order__status=1).exists(): 
                 order_product = OrderProduct.objects.get(order=order, product_option=product_option)

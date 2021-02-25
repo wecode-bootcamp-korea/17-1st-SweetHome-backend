@@ -15,6 +15,7 @@ class OrderProductView(View):
     def get(self, request):
         try:
             user = request.user
+            user = User.objects.get(id=1)
 
             if not Order.objects.filter(Q(user=user)&Q(status=1)).exists():
                 return JsonResponse({'message':'NO_PRODUCTS'}, status=200)
@@ -32,7 +33,7 @@ class OrderProductView(View):
                 "quantity"               : order_product.quantity,
                 "product_original_price" : order_product.product_option.product.original_price,
                 "product_image"          : order_product.product_option.product.productimage_set.all()[0].image_url,
-                "product_price"          : order_product.product_option.product.original_price * (100 - product.discount_percentage) / 100,
+                "product_price"          : order_product.product_option.product.original_price * (100 - order_product.product_option.product.discount_percentage) / 100,
                 "product_company"        : order_product.product_option.product.company.name,
                 "product_delivery_type"  : order_product.product_option.product.delivery.method.name,
                 "product_delivery_fee"   : order_product.product_option.product.delivery.fee.price,
@@ -65,11 +66,11 @@ class OrderProductView(View):
     def post(self, request):
         try:
             user = request.user
+            user = User.objects.get(id=1)
 
             data = json.loads(request.body)
             product_option_id = data['id']
             quantity = data['quantity']
-            total_price = data['total_price']
 
             if product_option_id:
                 order_product          = OrderProduct.objects.get(Q(product_option_id=product_option_id)&Q(order__status=1))
@@ -92,13 +93,15 @@ class OrderProductView(View):
                     "quantity"               : order_product.quantity,
                     "product_original_price" : order_product.product_option.product.original_price,
                     "product_image"          : order_product.product_option.product.productimage_set.all()[0].image_url,
-                    "product_price"          : order_product.product_option.product.original_price * (100 - product.discount_percentage) / 100,
+                    "product_price"          : order_product.product_option.product.original_price * (100 - order_product.product_option.product.discount_percentage) / 100,
                     "product_company"        : order_product.product_option.product.company.name,
                     "product_delivery_type"  : order_product.product_option.product.delivery.method.name,
                     "product_delivery_fee"   : order_product.product_option.product.delivery.fee.price,
                 } for order_product in order_products]
 
                 return JsonResponse({'message':results}, status=200)
+
+            total_price = data['total_price']
 
             order = Order.objects.get(Q(user=user)&Q(status=1))
             order.total_price = total_price

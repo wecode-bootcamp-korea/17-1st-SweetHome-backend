@@ -9,131 +9,34 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('user', '0001_initial'),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='Posting',
+            name='User',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('image_url', models.URLField(max_length=2000)),
-                ('content', models.CharField(max_length=255)),
+                ('email', models.CharField(max_length=45, unique=True)),
+                ('password', models.CharField(max_length=300)),
+                ('name', models.CharField(max_length=45, unique=True)),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('updated_at', models.DateTimeField(auto_now=True)),
+                ('image_url', models.URLField(default='https://www.flaticon.com/svg/vstatic/svg/742/742751.svg?token=exp=1613546907~hmac=a021c08f8195374a8901fc3eccbb71b7', max_length=2000)),
+                ('description', models.CharField(max_length=45, null=True)),
             ],
             options={
-                'db_table': 'postings',
+                'db_table': 'users',
             },
         ),
         migrations.CreateModel(
-            name='PostingHousing',
+            name='Follow',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=45, unique=True)),
+                ('from_user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='following', to='user.user')),
+                ('to_user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='follower', to='user.user')),
             ],
             options={
-                'db_table': 'posting_housings',
+                'db_table': 'follows',
             },
-        ),
-        migrations.CreateModel(
-            name='PostingSize',
-            fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=45, unique=True)),
-            ],
-            options={
-                'db_table': 'posting_sizes',
-            },
-        ),
-        migrations.CreateModel(
-            name='PostingSpace',
-            fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=45, unique=True)),
-            ],
-            options={
-                'db_table': 'posting_spaces',
-            },
-        ),
-        migrations.CreateModel(
-            name='PostingStyle',
-            fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=45, unique=True)),
-            ],
-            options={
-                'db_table': 'posting_styles',
-            },
-        ),
-        migrations.CreateModel(
-            name='PostingScrap',
-            fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('posting', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='posting.posting')),
-                ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='user.user')),
-            ],
-            options={
-                'db_table': 'posting_scraps',
-            },
-        ),
-        migrations.CreateModel(
-            name='PostingLike',
-            fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('posting', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='posting.posting')),
-                ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='user.user')),
-            ],
-            options={
-                'db_table': 'posting_likes',
-            },
-        ),
-        migrations.CreateModel(
-            name='PostingComment',
-            fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('content', models.CharField(max_length=100)),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('posting', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='comment', to='posting.posting')),
-                ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='user.user')),
-            ],
-            options={
-                'db_table': 'posting_comments',
-            },
-        ),
-        migrations.AddField(
-            model_name='posting',
-            name='housing',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='posting.postinghousing'),
-        ),
-        migrations.AddField(
-            model_name='posting',
-            name='like_user',
-            field=models.ManyToManyField(related_name='user_like_posting', through='posting.PostingLike', to='user.User'),
-        ),
-        migrations.AddField(
-            model_name='posting',
-            name='scrap_user',
-            field=models.ManyToManyField(related_name='user_scrap_posting', through='posting.PostingScrap', to='user.User'),
-        ),
-        migrations.AddField(
-            model_name='posting',
-            name='size',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='posting.postingsize'),
-        ),
-        migrations.AddField(
-            model_name='posting',
-            name='space',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='posting.postingspace'),
-        ),
-        migrations.AddField(
-            model_name='posting',
-            name='style',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='posting.postingstyle'),
-        ),
-        migrations.AddField(
-            model_name='posting',
-            name='user',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='user.user'),
         ),
     ]
