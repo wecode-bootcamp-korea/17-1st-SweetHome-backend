@@ -1,3 +1,5 @@
+import json
+
 from django.http            import JsonResponse
 from django.views           import View
 from django.db.models       import Count
@@ -107,3 +109,18 @@ class CategoryView(View):
                     }]
                 }
         return JsonResponse({'categories' : category_condition}, status=200)
+
+class PostingScrapView(View):
+    @login_decorator
+    def post(self, request):
+        data       = json.loads(request.body)
+        user       = request.user
+        posting_id = data['posting_id']
+
+        if PostingScrap.objects.filter(user_id=user.id, posting_id=posting_id):
+            PostingScrap.objects.filter(user_id=user.id, posting_id=posting_id).delete()
+            return JsonResponse({'message' : 'SUCCESS'}, status=204)
+
+        PostingScrap.objects.create(user_id=user.id, posting_id=posting_id)
+        return JsonResponse({'message' : 'SUCCESS'}, status=201)
+
