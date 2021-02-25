@@ -82,7 +82,15 @@ class PostingView(View):
             image_url   = data['card_image']
             content     = data['card_content']
 
-            Posting.objects.create(user_id=user.id, image_url=image_url, content=content, size_id=size_id, housing_id=housing_id, style_id=style_id, space_id=space_id)
+            Posting.objects.create(
+                    user_id     = user.id, 
+                    image_url   = image_url, 
+                    content     = content, 
+                    size_id     = size_id, 
+                    housing_id  = housing_id, 
+                    style_id    = style_id, 
+                    space_id    = space_id
+                    )
             return JsonResponse({'message' : 'SUCCESS'}, status=201)
 
         except KeyError:
