@@ -99,3 +99,6 @@ class OrderProductView(View):
         
         except KeyError:
             return JsonResponse({'message':'KEY_ERROR'}, status=400)
+        
+        except OrderProduct.DoesNotExist:
+            return JsonResponse({'message':'INVALID_ORDER'}, status=400)
