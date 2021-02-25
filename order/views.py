@@ -7,7 +7,7 @@ from django.db.utils  import DataError
 
 from user.models    import User
 from user.utils     import login_decorator
-from order.models   import Order, OrderStatus, OrderProduct
+from order.models   import OrderStatus, OrderProduct
 from product.models import Product
 
 class OrderProductView(View):
@@ -48,6 +48,18 @@ class OrderProductView(View):
         
         except DataError:
             return JsonResponse({'message':'DATA_ERROR'}, status=400)
+        
+        except Order.DoesNotExist:
+            return JsonResponse({'message':'INVALID_ORDER'}, status=400)
+        
+        except Order.MultipleObjectsReturned:
+            return JsonResponse({'message':'MULTIPLE_ORDER_ERROR'}, status=400)
+        
+        except OrderProduct.DoesNotExist:
+            return JsonResponse({'message':'INVALID_ORDER_PRODUCT'}, status=400)
+
+        except OrderProduct.MultipleObjectsReturned:
+            return JsonResponse({'message':'MULTIPLE_ORDER_PRODUCT_ERROR'}, status=400)
 
     @login_decorator
     def post(self, request):
@@ -99,6 +111,19 @@ class OrderProductView(View):
         
         except KeyError:
             return JsonResponse({'message':'KEY_ERROR'}, status=400)
+
+        except Order.DoesNotExist:
+            return JsonResponse({'message':'INVALID_ORDER'}, status=400)
+        
+        except Order.MultipleObjectsReturned:
+            return JsonResponse({'message':'MULTIPLE_ORDER_ERROR'}, status=400)
         
         except OrderProduct.DoesNotExist:
-            return JsonResponse({'message':'INVALID_ORDER'}, status=400)
+            return JsonResponse({'message':'INVALID_ORDER_PRODUCT'}, status=400)
+
+        except OrderProduct.MultipleObjectsReturned:
+            return JsonResponse({'message':'MULTIPLE_ORDER_PRODUCT_ERROR'}, status=400)
+
+
+        
+        
