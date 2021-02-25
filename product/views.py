@@ -5,6 +5,7 @@ from django.views     import View
 from django.db.models import Avg, Count, Q
 
 from user.models    import User
+from user.utils     import login_decorator
 from product.models import (
   Product, 
   ProductReview, 
