@@ -26,7 +26,7 @@ class CategoryView(View):
                     'name': detail_category.name
                 } for detail_category in sub_category.detailcategory_set.all()]
             } for sub_category in category.subcategory_set.all()]
-            } for category in Category.objects.all().order_by('id')]
+        } for category in Category.objects.all().order_by('id')]
         return JsonResponse({'categories': category_list}, status=200)
 
 class ProductView(View):
