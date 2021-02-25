@@ -21,7 +21,7 @@ class PostingView(View):
     @login_decorator
     def get(self, request):
         user            = request.user
-        postings        = Posting.objects.prefetch_related('comment', 'postinglike_set').select_related('user').all()
+        postings        = Posting.objects.prefetch_related('comment').select_related('user').all()
         order_request   = request.GET.get('order', 'recent')
         postings        = postings.annotate(
                             like_num=Count("postinglike"),
@@ -58,6 +58,7 @@ class PostingView(View):
                 "card_image"                : posting.image_url,
                 "card_content"              : posting.content,
                 "like_status"               : True if posting.postinglike_set.filter(user_id=user.id) else False,
+                "scrap_status"              : True if posting.positngscrap_set.filter(user_id=user.id) else False,
                 "comment_num"               : posting.comment.filter(posting_id=posting.id).count(),
                 "comment_user_image"        : posting.comment.first().user.image_url if posting.comment.exists() else None,
                 "comment_user_name"         : posting.comment.first().user.name if posting.comment.exists() else None,
@@ -135,9 +136,9 @@ class CategoryView(View):
 class PostingLikeView(View):
     @login_decorator
     def post(self, request):
-        user = request.user
-        data = json.loads(request.body)
-        posting_id = data['posting_id']
+        user        = request.user
+        data        = json.loads(request.body)
+        posting_id  = data['posting_id']
 
         posting = Posting.objects.prefetch_related('postinglike_set').get(id=posting_id)
 
