@@ -74,10 +74,10 @@ class PostingView(View):
         try:
             user        = request.user
             data        = json.loads(request.body)
-            size_id     = PostingSize.objects.get(id=data['size']).id
-            housing_id  = PostingHousing.objects.get(id=data['housing']).id
-            style_id    = PostingStyle.objects.get(id=data['style']).id
-            space_id    = PostingSpace.objects.get(id=data['space']).id
+            size_id     = data['size']
+            housing_id  = data['housing']
+            style_id    = data['style']
+            space_id    = data['space']
             image_url   = data['card_image']
             content     = data['card_content']
 
@@ -139,11 +139,10 @@ class PostingLikeView(View):
         data = json.loads(request.body)
         posting_id = data['posting_id']
 
-        posting = Posting.objects.get(id=posting_id)
+        posting = Posting.objects.prefetch_related('postinglike_set').get(id=posting_id)
 
-        if posting.like_user.filter(id=user.id).exists():
-            posting = PostingLike.objects.filter(user_id=user.id, posting_id=posting_id)
-            posting.delete()
+        if posting.like_user.filter(id=user.id):
+            PostingLike.objects.filter(user_id=user.id, posting_id=posting_id).delete()
             return JsonResponse({'message' : 'SUCCESS'}, status=204)
 
         posting.like_user.add(User.objects.get(id=user.id))
