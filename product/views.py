@@ -10,8 +10,13 @@ from product.models import (
   Product, 
   ProductReview, 
   ReviewLike,
+  ProductOption,
+  ProductColor,
+  ProductSize,
   Category
 )
+from order.models   import OrderProduct, Order, OrderStatus
+from user.utils     import login_decorator
 
 DISCOUNT_PROUDCTS_COUNT = 5
 
@@ -92,6 +97,49 @@ class ProductView(View):
         except ValueError:
             return JsonResponse({'message' : 'INVALID_VALUE'}, status=400)
 
+class ProductCartView(View):
+    @login_decorator
+    def post(self, request):
+        try:
+            user = request.user
+
+            if not Product.objects.filter(id=product_id).exists():
+                return JsonResponse({'message':'INVALID_PRODUCT'}, status=404)
+            
+            data     = json.loads(request.body)
+            color    = ProductColor.objects.get(name=data['color'])
+            size     = ProductSize.objects.get(name=data['size'])
+            quantity = int(data['quantity'])
+            product  = Product.objects.get(id=data['id'])
+            
+            if not ProductOption.objects.filter(
+                product=Product.objects.get(id=product_id),color=color, size=size
+            ).exists():
+                return JsonResponse({'message':'INVALID_PRODUCT_OPTION'}, status=404)
+
+            product_option = ProductOption.objects.get(
+                product=Product.objects.get(id=product_id),color=color, size=size
+            )
+            order = Order.objects.create(user=user, status_id=1)
+
+            if OrderProduct.objects.filter(order=order, product_option=product_option, order__status=1).exists(): 
+                order_products = OrderProduct.objects.filter(order=order, product_option=product_option)
+                for order_product in order_products:
+                    order_product.quantity+=quantity
+                    order_product.save()
+            else:
+                OrderProduct.objects.create(
+                    order=order, product_option=product_option, quantity=quantity
+                )
+            
+            return JsonResponse({'message':'SUCCESS'}, status=201)
+
+        except json.decoder.JSONDecodeError:
+            return JsonResponse({'message':'JSON_DECODE_ERROR'}, status=400)
+        
+        except KeyError:
+            return JsonResponse({'message':'KEY_ERROR'}, status=400)
+          
 class ProductDetailView(View):
     def get(self, request, product_id):
         if not Product.objects.filter(id=product_id).exists():
