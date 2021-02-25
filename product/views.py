@@ -4,6 +4,8 @@ from django.http      import JsonResponse
 from django.views     import View
 from django.db.models import Avg, Count, Q
 
+from user.models    import User
+from user.utils     import login_decorator
 from product.models import (
   Product, 
   ProductReview, 
@@ -99,7 +101,7 @@ class ProductReviewView(View):
     def get(self, request, product_id):
         try:
             product   = Product.objects.get(id=product_id)
-            order     = request.GET.get('order', None)
+            order     = request.GET.get('order', 'recent')
             rate_list = request.GET.getlist('rate', None)
             like      = request.GET.get('like', None)
 
@@ -133,6 +135,39 @@ class ProductReviewView(View):
                     } for product_review in product_reviews]
 
             return JsonResponse({'results':results}, status=200)
+
+        except json.decoder.JSONDecodeError:
+            return JsonResponse({'message':'JSON_DECODE_ERROR'}, status=400)
+        
+        except KeyError:
+            return JsonResponse({'message':'KEY_ERROR'}, status=400)
+        
+        except Product.DoesNotExist:
+            return JsonResponse({'message':'PRODUCT_DOES_NOT_EXIST'}, status=400)
+
+class ReviewLikeView(View):
+    @login_decorator
+    def post(self, request, product_id):
+        try:
+            data     = json.loads(request.body)
+            review_id = data.get('review_id')
+
+            user = request.user
+
+            if not ProductReview.objects.filter(id=review_id).exists():
+                return JsonResponse({'message':'INVALID_REVIEW'}, status=401)
+
+            product_review = ProductReview.objects.get(id=review_id)
+            
+            if user.productreview_set.filter(id=review_id).exists():
+                return JsonResponse({'message':'CANNOT_LIKE_YOUR_REVIEW'}, status=401)
+            
+            review_like, created = ReviewLike.objects.get_or_create(review=product_review, user=user)
+
+            if not created:
+                review_like.delete()
+
+            return JsonResponse({'message':'SUCCESS'}, status=200)
 
         except json.decoder.JSONDecodeError:
             return JsonResponse({'message':'JSON_DECODE_ERROR'}, status=400)
