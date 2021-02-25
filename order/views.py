@@ -61,11 +61,11 @@ class OrderProductView(View):
         except OrderProduct.MultipleObjectsReturned:
             return JsonResponse({'message':'MULTIPLE_ORDER_PRODUCT_ERROR'}, status=400)
 
-    @login_decorator
+    # @login_decorator
     def post(self, request):
         try:
-            user = request.user
-
+            # user = request.user
+            user = User.objects.get(id=1)
             data = json.loads(request.body)
             product_option_id = data['id']
             quantity = data['quantity']
