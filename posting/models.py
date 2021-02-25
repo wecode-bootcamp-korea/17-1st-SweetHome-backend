@@ -58,7 +58,7 @@ class PostingScrap(models.Model):
 
 class PostingComment(models.Model):
     user       = models.ForeignKey('user.User', on_delete=models.CASCADE)
-    posting    = models.ForeignKey('Posting', on_delete=models.CASCADE)
+    posting    = models.ForeignKey('Posting', on_delete=models.CASCADE, related_name='comment')
     content    = models.CharField(max_length=100)
     created_at = models.DateTimeField(auto_now_add=True)
 
