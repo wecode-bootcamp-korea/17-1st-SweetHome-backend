@@ -148,3 +148,42 @@ class ReviewLikeView(View):
         
         except Product.DoesNotExist:
             return JsonResponse({'message':'PRODUCT_DOES_NOT_EXIST'}, status=400)
+
+class ProductDetailView(View):
+    def post(self, request, product_id):
+        @login_decorator
+        try:
+            if not Product.objects.filter(id=product_id).exists():
+                return JsonResponse({'message':'INVALID_PRODUCT'}, status=404)
+
+            product = Product.objects.get(id=product_id)
+            
+            data     = json.loads(request.body)
+            color    = ProductColor.objects.get(name=data['color'])
+            size     = ProductSize.objects.get(name=data['size'])
+            quantity = int(data['quantity'])
+
+            user = request.user
+
+            product_option = ProductOption.objects.update_or_create(
+                product=Product.objects.get(id=product_id),color=color, size=size
+            )[0]
+            order = Order.objects.update_or_create(user=user, status=OrderStatus.objects.get(id=1))[0]
+
+            if OrderProduct.objects.filter(order=order, product_option=product_option, order__status=1).exists(): 
+                order_products = OrderProduct.objects.filter(order=order, product_option=product_option)
+                for order_product in order_products:
+                    order_product.quantity+=quantity
+                    order_product.save()
+            else:
+                OrderProduct.objects.create(
+                    order=order, product_option=product_option, quantity=quantity
+                )
+
+            return JsonResponse({'message':'SUCCESS'}, status=200)
+
+        except json.decoder.JSONDecodeError:
+            return JsonResponse({'message':'JSON_DECODE_ERROR'}, status=400)
+        
+        except KeyError:
+            return JsonResponse({'message':'KEY_ERROR'}, status=400)
