@@ -123,10 +123,9 @@ class ProductCartView(View):
             order = Order.objects.create(user=user, status_id=1)
 
             if OrderProduct.objects.filter(order=order, product_option=product_option, order__status=1).exists(): 
-                order_products = OrderProduct.objects.filter(order=order, product_option=product_option)
-                for order_product in order_products:
-                    order_product.quantity+=quantity
-                    order_product.save()
+                order_product = OrderProduct.objects.get(order=order, product_option=product_option)
+                order_product.quantity+=quantity
+                order_product.save()
             else:
                 OrderProduct.objects.create(
                     order=order, product_option=product_option, quantity=quantity
