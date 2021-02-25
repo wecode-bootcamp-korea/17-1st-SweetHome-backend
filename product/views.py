@@ -13,6 +13,7 @@ from product.models import (
   ProductSize,
 )
 from order.models   import OrderProduct, Order, OrderStatus
+from user.utils     import login_decorator
 
 DISCOUNT_PROUDCTS_COUNT = 5
 
