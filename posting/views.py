@@ -20,12 +20,9 @@ from posting.models import (
 )
 
 class PostingView(View):
+    @login_decorator
     def get(self, request):
-        access_token    = request.header.get('Authorizaiton', None)
-        if access_token : 
-            payload = jwt.decode(access_token, SECRET_KEY, algorithms=ALGORITHM)
-            user    = User.objects.get(id=payload['user_id'])
-        
+        user            = request.user
         postings        = Posting.objects.prefetch_related('comment').select_related('user').all()
         order_request   = request.GET.get('order', 'recent')
         postings        = postings.annotate(
@@ -62,8 +59,8 @@ class PostingView(View):
                 "card_user_introduction"    : posting.user.description,
                 "card_image"                : posting.image_url,
                 "card_content"              : posting.content,
-                "like_status"               : True if posting.postinglike_set.filter(user_id=user.id) else False,
-                "scrap_status"              : True if posting.positngscrap_set.filter(user_id=user.id) else False,
+                "like_status"               : True if posting.postinglike_set.filter(user=user) else False,
+                "scrap_status"              : True if posting.postingscrap_set.filter(user=user) else False,
                 "comment_num"               : posting.comment.filter(posting_id=posting.id).count(),
                 "comment_user_image"        : posting.comment.first().user.image_url if posting.comment.exists() else None,
                 "comment_user_name"         : posting.comment.first().user.name if posting.comment.exists() else None,
