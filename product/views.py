@@ -72,26 +72,30 @@ class ProductView(View):
 
         return JsonResponse({'products' : products_list, 'count' : products_count}, status=200)
 
-class ProductDetailView(View):
+class ProductCartView(View):
     @login_decorator
-    def post(self, request, product_id):
+    def post(self, request):
         try:
+            user = request.user
+
             if not Product.objects.filter(id=product_id).exists():
                 return JsonResponse({'message':'INVALID_PRODUCT'}, status=404)
-
-            product = Product.objects.get(id=product_id)
             
             data     = json.loads(request.body)
             color    = ProductColor.objects.get(name=data['color'])
             size     = ProductSize.objects.get(name=data['size'])
             quantity = int(data['quantity'])
-
-            user = request.user
-
-            product_option = ProductOption.objects.update_or_create(
+            product  = Product.objects.get(id=data['id'])
+            
+            if not ProductOption.objects.filter(
                 product=Product.objects.get(id=product_id),color=color, size=size
-            )[0]
-            order = Order.objects.update_or_create(user=user, status=OrderStatus.objects.get(id=1))[0]
+            ).exists():
+                return JsonResponse({'message':'INVALID_PRODUCT_OPTION'}, status=404)
+
+            product_option = ProductOption.objects.get(
+                product=Product.objects.get(id=product_id),color=color, size=size
+            )
+            order = Order.objects.create(user=user, status=OrderStatus.objects.get(id=1))
 
             if OrderProduct.objects.filter(order=order, product_option=product_option, order__status=1).exists(): 
                 order_products = OrderProduct.objects.filter(order=order, product_option=product_option)
@@ -102,8 +106,8 @@ class ProductDetailView(View):
                 OrderProduct.objects.create(
                     order=order, product_option=product_option, quantity=quantity
                 )
-
-            return JsonResponse({'message':'SUCCESS'}, status=200)
+            
+            return JsonResponse({'message':'SUCCESS'}, status=201)
 
         except json.decoder.JSONDecodeError:
             return JsonResponse({'message':'JSON_DECODE_ERROR'}, status=400)
