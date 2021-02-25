@@ -2,59 +2,43 @@ import json
 
 from django.http      import JsonResponse
 from django.views     import View
+from django.db.models import Q
 from django.db.utils  import DataError
 
-from user.models  import User
-from order.models import Order, OrderProduct
-
-class OrderView(View):
-    def post(self, request):
-        try:
-            data                    = json.loads(request.body)
-            # user id를 불러올 때 어떤 형식으로 불러오는가
-            user_id                 = data['user_id']
-            sender_name             = data['sender_name']
-            sender_email            = data['sender_email']
-            sender_phone_number     = data['sender_phone_number']
-            recipient_name          = data['recipient_name']
-            recipient_phone_number  = data['recipient_phone_number']
-            recipient_address       = data['recipient_address']
-            total_amount            = data['total_amount']
-
-            user = User.objects.create(id=user_id)
-            Order.objects.create(
-                user=user,
-                sender_name=sender_name,
-                sender_email=sender_email,
-                sender_phone_number=sender_phone_number,
-                recipient_name=recipient_name,
-                recipient_phone_number=recipient_phone_number,
-                recipient_address=recipient_address,
-                total_amount=total_amount
-            )
-
-            return JsonResponse({'message':'SUCCESS'}, status=200)
-
-        except json.decoder.JSONDecodeError:
-            return JsonResponse({'message':'JSON_DECODE_ERROR'}, status=400)
-        
-        except KeyError:
-            return JsonResponse({'message':'KEY_ERROR'}, status=400)
-        
-        except DataError:
-            return JsonResponse({'message':'DATA_ERROR'}, status=400)
+from user.models    import User
+from user.utils     import login_decorator
+from order.models   import Order, OrderStatus, OrderProduct
+from product.models import Product
 
 class OrderProductView(View):
-    def post(self, request):
+    @login_decorator
+    def get(self, request):
         try:
-            data           = json.loads(request.body)
-            # product_option id를 불러올 때 어떤 형식으로 불러오는가. 오브젝트?
+            user = request.user
 
-            product_option = data['product_option_id']
-            quantity       = data['quantity']
-            order          = data['order_id']
+            if not Order.objects.filter(Q(user=user)&Q(status=1)).exists():
+                return JsonResponse({'message':'NO_PRODUCTS'}, status=200)
+            order = Order.objects.get(Q(user=user)&Q(status=1))
+            
+            order_products  = order.orderproduct_set.all()
 
-            return JsonResponse({'message':'SUCCESS'}, status=200)
+            results = [
+            {
+                "product_id"             : order_product.id, 
+                "product_option_id"      : order_product.product_option.id,
+                "product_name"           : order_product.product_option.product.name,
+                "product_color"          : order_product.product_option.color.name,
+                "product_size"           : order_product.product_option.size.name,
+                "quantity"               : order_product.quantity,
+                "product_original_price" : order_product.product_option.product.original_price,
+                "product_image"          : order_product.product_option.product.productimage_set.all()[0].image_url,
+                "product_price"          : order_product.product_option.product.original_price * (100 - product.discount_percentage) / 100,
+                "product_company"        : order_product.product_option.product.company.name,
+                "product_delivery_type"  : order_product.product_option.product.delivery.method.name,
+                "product_delivery_fee"   : order_product.product_option.product.delivery.fee.price,
+            } for order_product in order_products]
+            
+            return JsonResponse({'results':results}, status=200)
 
         except json.decoder.JSONDecodeError:
             return JsonResponse({'message':'JSON_DECODE_ERROR'}, status=400)
@@ -65,5 +49,53 @@ class OrderProductView(View):
         except DataError:
             return JsonResponse({'message':'DATA_ERROR'}, status=400)
 
+    @login_decorator
+    def post(self, request):
+        try:
+            user = request.user
 
-    
+            data = json.loads(request.body)
+            product_option_id = data['id']
+            quantity = data['quantity']
+            total_price = data['total_price']
+
+            if product_option_id:
+                order_product          = OrderProduct.objects.get(Q(product_option_id=product_option_id)&Q(order__status=1))
+                order_product.quantity = quantity
+                order_product.save()
+
+                if not Order.objects.filter(Q(user=user)&Q(status=1)).exists():
+                    return JsonResponse({'message':'NO_PRODUCTS'}, status=200)
+
+                order           = Order.objects.get(Q(user=user)&Q(status=1))
+                order_products  = order.orderproduct_set.all()
+
+                results = [
+                {
+                    "product_id"             : order_product.id, 
+                    "product_option_id"      : order_product.product_option.id,
+                    "product_name"           : order_product.product_option.product.name,
+                    "product_color"          : order_product.product_option.color.name,
+                    "product_size"           : order_product.product_option.size.name,
+                    "quantity"               : order_product.quantity,
+                    "product_original_price" : order_product.product_option.product.original_price,
+                    "product_image"          : order_product.product_option.product.productimage_set.all()[0].image_url,
+                    "product_price"          : order_product.product_option.product.original_price * (100 - product.discount_percentage) / 100,
+                    "product_company"        : order_product.product_option.product.company.name,
+                    "product_delivery_type"  : order_product.product_option.product.delivery.method.name,
+                    "product_delivery_fee"   : order_product.product_option.product.delivery.fee.price,
+                } for order_product in order_products]
+
+                return JsonResponse({'message':results}, status=200)
+
+            order = Order.objects.get(Q(user=user)&Q(status=1))
+            order.total_price = total_price
+            order.save()
+
+            return JsonResponse({'message':'SUCCESS'}, status=200)
+
+        except json.decoder.JSONDecodeError:
+            return JsonResponse({'message':'JSON_DECODE_ERROR'}, status=400)
+        
+        except KeyError:
+            return JsonResponse({'message':'KEY_ERROR'}, status=400)
