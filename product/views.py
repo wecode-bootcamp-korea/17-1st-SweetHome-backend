@@ -69,6 +69,34 @@ class ProductView(View):
 
         return JsonResponse({'products' : products_list, 'count' : products_count}, status=200)
 
+class ProductDetailView(View):
+    def get(self, request, product_id):
+        if not Product.objects.filter(id=product_id).exists():
+            return JsonResponse({'message':'INVALID_PRODUCT'}, status=404)
+
+        product = Product.objects.get(id=product_id)
+
+        product_detail = {
+            'id'                  : product.id,
+            'name'                : product.name,
+            'original_price'      : int(product.original_price),
+            'discount_percentage' : int(product.discount_percentage),
+            'discount_price'      : int(product.original_price) * (100 - int(product.discount_percentage)) // 100,
+            'company'             : product.company.name,
+            'image'               : [i.image_url for i in product.productimage_set.all()],
+            'rate_average'        : round(product.productreview_set.aggregate(Avg('rate'))['rate__avg'], 1)\
+                if product.productreview_set.aggregate(Avg('rate'))['rate__avg'] else 0,
+            'review_count'        : product.productreview_set.count(),
+            'delivery_type'       : product.delivery.method.name,
+            'delivery_period'     : product.delivery.period.day,
+            'delivery_fee'        : product.delivery.fee.price,
+            'is_free_delivery'    : product.delivery.fee.price == 0,
+            'is_on_sale'          : not (int(product.discount_percentage) == 0),
+            'size'                : list(set([i.size.name for i in product.productoption_set.all()])),
+            'color'               : list(set([i.color.name for i in product.productoption_set.all()])),
+        }
+        return JsonResponse({'product': product_detail}, status=200)
+
 class ProductReviewView(View):
     def get(self, request, product_id):
         try:
