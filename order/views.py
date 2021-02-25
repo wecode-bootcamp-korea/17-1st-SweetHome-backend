@@ -15,7 +15,6 @@ class OrderProductView(View):
     def get(self, request):
         try:
             user = request.user
-            user = User.objects.get(id=1)
 
             if not Order.objects.filter(Q(user=user)&Q(status=1)).exists():
                 return JsonResponse({'message':'NO_PRODUCTS'}, status=200)
@@ -66,7 +65,6 @@ class OrderProductView(View):
     def post(self, request):
         try:
             user = request.user
-            user = User.objects.get(id=1)
 
             data = json.loads(request.body)
             product_option_id = data['id']
