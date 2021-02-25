@@ -53,10 +53,11 @@ class ProductView(View):
             filter_set = {
                 filter_prefixes.get(key) : value for (key, value) in dict(request.GET).items() if filter_prefixes.get(key)
             }
-            
-            products = Product.objects.select_related(
-                'company', 'delivery__fee').filter(**filter_set).prefetch_related(
-                'productimage_set', 'productreview_set').distinct()
+
+            products = Product.objects.select_related('company', 'delivery__fee')\
+                .filter(**filter_set)\
+                .prefetch_related('productimage_set', 'productreview_set')\
+                .annotate(rate_average=Avg('productreview__rate')).distinct()
             
             order_by_time  = {'recent' : 'created_at', 'old' : '-created_at'}
             order_by_price = {'min_price' : 'discount_price', 'max_price' : '-discount_price'}
@@ -73,7 +74,10 @@ class ProductView(View):
                 products = products.annotate(review_count=Count('productreview')).order_by('-review_count')
                     
             if top_list_condition == 'discount': 
-                products = Product.objects.all().order_by('-discount_percentage')[:DISCOUNT_PROUDCTS_COUNT]
+                products = Product.objects.select_related('company', 'delivery__fee')\
+                    .prefetch_related('productimage_set', 'productreview_set')\
+                    .annotate(rate_average=Avg('productreview__rate'))\
+                    .all().order_by('-discount_percentage')[:DISCOUNT_PROUDCTS_COUNT]
 
             products_list = [{
                 'id'                  : product.id,
