@@ -85,9 +85,8 @@ class ProductView(View):
                 'discount_percentage' : int(product.discount_percentage),
                 'discount_price'      : int(product.original_price) * (100 - int(product.discount_percentage)) // 100,
                 'company'             : product.company.name,
-                'image'               : product.productimage_set.first().image_url,
-                'rate_average'        : round(product.productreview_set.aggregate(Avg('rate'))['rate__avg'], 1)\
-                        if product.productreview_set.aggregate(Avg('rate'))['rate__avg'] else 0,
+                'image'               : product.productimage_set.all()[0].image_url,
+                'rate_average'        : round(product.rate_average, 1) if product.rate_average else 0,
                 'review_count'        : product.productreview_set.count(),
                 'is_free_delivery'    : product.delivery.fee.price == 0,
                 'is_on_sale'          : not (int(product.discount_percentage) == 0),
