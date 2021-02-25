@@ -4,13 +4,32 @@ from django.http      import JsonResponse
 from django.views     import View
 from django.db.models import Avg, Count, Q
 
+from user.models    import User
+from user.utils     import login_decorator
 from product.models import (
   Product, 
   ProductReview, 
-  ReviewLike
+  ReviewLike,
+  Category
 )
 
 DISCOUNT_PROUDCTS_COUNT = 5
+
+class CategoryView(View):
+    def get(self, request):
+        category_list = [{
+            'id': category.id,
+            'name': category.name,
+            'sub_category': [{
+                'id': sub_category.id,
+                'name': sub_category.name,
+                'detail_category' : [{
+                    'id': detail_category.id,
+                    'name': detail_category.name
+                } for detail_category in sub_category.detailcategory_set.all()]
+            } for sub_category in category.subcategory_set.all()]
+        } for category in Category.objects.all().order_by('id')]
+        return JsonResponse({'categories': category_list}, status=200)
 
 class ProductView(View):
     def get(self, request):
@@ -73,11 +92,39 @@ class ProductView(View):
         except ValueError:
             return JsonResponse({'message' : 'INVALID_VALUE'}, status=400)
 
+class ProductDetailView(View):
+    def get(self, request, product_id):
+        if not Product.objects.filter(id=product_id).exists():
+            return JsonResponse({'message':'INVALID_PRODUCT'}, status=404)
+
+        product = Product.objects.get(id=product_id)
+
+        product_detail = {
+            'id'                  : product.id,
+            'name'                : product.name,
+            'original_price'      : int(product.original_price),
+            'discount_percentage' : int(product.discount_percentage),
+            'discount_price'      : int(product.original_price) * (100 - int(product.discount_percentage)) // 100,
+            'company'             : product.company.name,
+            'image'               : [i.image_url for i in product.productimage_set.all()],
+            'rate_average'        : round(product.productreview_set.aggregate(Avg('rate'))['rate__avg'], 1)\
+                if product.productreview_set.aggregate(Avg('rate'))['rate__avg'] else 0,
+            'review_count'        : product.productreview_set.count(),
+            'delivery_type'       : product.delivery.method.name,
+            'delivery_period'     : product.delivery.period.day,
+            'delivery_fee'        : product.delivery.fee.price,
+            'is_free_delivery'    : product.delivery.fee.price == 0,
+            'is_on_sale'          : not (int(product.discount_percentage) == 0),
+            'size'                : list(set([i.size.name for i in product.productoption_set.all()])),
+            'color'               : list(set([i.color.name for i in product.productoption_set.all()])),
+        }
+        return JsonResponse({'product': product_detail}, status=200)
+
 class ProductReviewView(View):
     def get(self, request, product_id):
         try:
             product   = Product.objects.get(id=product_id)
-            order     = request.GET.get('order', None)
+            order     = request.GET.get('order', 'recent')
             rate_list = request.GET.getlist('rate', None)
             like      = request.GET.get('like', None)
 
@@ -111,6 +158,39 @@ class ProductReviewView(View):
                     } for product_review in product_reviews]
 
             return JsonResponse({'results':results}, status=200)
+
+        except json.decoder.JSONDecodeError:
+            return JsonResponse({'message':'JSON_DECODE_ERROR'}, status=400)
+        
+        except KeyError:
+            return JsonResponse({'message':'KEY_ERROR'}, status=400)
+        
+        except Product.DoesNotExist:
+            return JsonResponse({'message':'PRODUCT_DOES_NOT_EXIST'}, status=400)
+
+class ReviewLikeView(View):
+    @login_decorator
+    def post(self, request, product_id):
+        try:
+            data     = json.loads(request.body)
+            review_id = data.get('review_id')
+
+            user = request.user
+
+            if not ProductReview.objects.filter(id=review_id).exists():
+                return JsonResponse({'message':'INVALID_REVIEW'}, status=401)
+
+            product_review = ProductReview.objects.get(id=review_id)
+            
+            if user.productreview_set.filter(id=review_id).exists():
+                return JsonResponse({'message':'CANNOT_LIKE_YOUR_REVIEW'}, status=401)
+            
+            review_like, created = ReviewLike.objects.get_or_create(review=product_review, user=user)
+
+            if not created:
+                review_like.delete()
+
+            return JsonResponse({'message':'SUCCESS'}, status=200)
 
         except json.decoder.JSONDecodeError:
             return JsonResponse({'message':'JSON_DECODE_ERROR'}, status=400)
