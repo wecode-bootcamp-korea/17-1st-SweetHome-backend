@@ -1,10 +1,9 @@
-from django.urls   import path
+from django.urls import path
 
-from product.views import (
-     ProductReviewView, ReviewLikeView
-)
+from .views import ProductView, ProductReviewView, ReviewLikeView
 
 urlpatterns = [
+    path('', ProductView.as_view()),
     path('/<int:product_id>/review', ProductReviewView.as_view()),
     path('/<int:product_id>/review-like', ReviewLikeView.as_view()),
 ]
