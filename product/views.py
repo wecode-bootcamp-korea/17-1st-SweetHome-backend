@@ -98,11 +98,11 @@ class ProductView(View):
             return JsonResponse({'message' : 'INVALID_VALUE'}, status=400)
 
 class ProductCartView(View):
-    # @login_decorator
+    @login_decorator
     def post(self, request):
         try:
-            # user = request.user
-            user = User.objects.get(id=1)
+            user = request.user
+
             data       = json.loads(request.body)
             color      = ProductColor.objects.get(name=data['color'])
             size       = ProductSize.objects.get(name=data['size'])
