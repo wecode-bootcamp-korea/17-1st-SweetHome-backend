@@ -32,7 +32,7 @@ class OrderProductView(View):
                 "quantity"               : order_product.quantity,
                 "product_original_price" : order_product.product_option.product.original_price,
                 "product_image"          : order_product.product_option.product.productimage_set.all()[0].image_url,
-                "product_price"          : order_product.product_option.product.original_price * (100 - product.discount_percentage) / 100,
+                "product_price"          : order_product.product_option.product.original_price * (100 - order_product.product_option.product.discount_percentage) / 100,
                 "product_company"        : order_product.product_option.product.company.name,
                 "product_delivery_type"  : order_product.product_option.product.delivery.method.name,
                 "product_delivery_fee"   : order_product.product_option.product.delivery.fee.price,
@@ -48,6 +48,18 @@ class OrderProductView(View):
         
         except DataError:
             return JsonResponse({'message':'DATA_ERROR'}, status=400)
+        
+        except Order.DoesNotExist:
+            return JsonResponse({'message':'INVALID_ORDER'}, status=400)
+        
+        except Order.MultipleObjectsReturned:
+            return JsonResponse({'message':'MULTIPLE_ORDER_ERROR'}, status=400)
+        
+        except OrderProduct.DoesNotExist:
+            return JsonResponse({'message':'INVALID_ORDER_PRODUCT'}, status=400)
+
+        except OrderProduct.MultipleObjectsReturned:
+            return JsonResponse({'message':'MULTIPLE_ORDER_PRODUCT_ERROR'}, status=400)
 
     @login_decorator
     def post(self, request):
@@ -57,7 +69,6 @@ class OrderProductView(View):
             data = json.loads(request.body)
             product_option_id = data['id']
             quantity = data['quantity']
-            total_price = data['total_price']
 
             if product_option_id:
                 order_product          = OrderProduct.objects.get(Q(product_option_id=product_option_id)&Q(order__status=1))
@@ -80,13 +91,15 @@ class OrderProductView(View):
                     "quantity"               : order_product.quantity,
                     "product_original_price" : order_product.product_option.product.original_price,
                     "product_image"          : order_product.product_option.product.productimage_set.all()[0].image_url,
-                    "product_price"          : order_product.product_option.product.original_price * (100 - product.discount_percentage) / 100,
+                    "product_price"          : order_product.product_option.product.original_price * (100 - order_product.product_option.product.discount_percentage) / 100,
                     "product_company"        : order_product.product_option.product.company.name,
                     "product_delivery_type"  : order_product.product_option.product.delivery.method.name,
                     "product_delivery_fee"   : order_product.product_option.product.delivery.fee.price,
                 } for order_product in order_products]
 
                 return JsonResponse({'message':results}, status=200)
+
+            total_price = data['total_price']
 
             order = Order.objects.get(Q(user=user)&Q(status=1))
             order.total_price = total_price
@@ -99,3 +112,15 @@ class OrderProductView(View):
         
         except KeyError:
             return JsonResponse({'message':'KEY_ERROR'}, status=400)
+
+        except Order.DoesNotExist:
+            return JsonResponse({'message':'INVALID_ORDER'}, status=400)
+        
+        except Order.MultipleObjectsReturned:
+            return JsonResponse({'message':'MULTIPLE_ORDER_ERROR'}, status=400)
+        
+        except OrderProduct.DoesNotExist:
+            return JsonResponse({'message':'INVALID_ORDER_PRODUCT'}, status=400)
+
+        except OrderProduct.MultipleObjectsReturned:
+            return JsonResponse({'message':'MULTIPLE_ORDER_PRODUCT_ERROR'}, status=400)
