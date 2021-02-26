@@ -77,7 +77,7 @@ class ProductView(View):
                 products = Product.objects.select_related('company', 'delivery__fee')\
                     .prefetch_related('productimage_set', 'productreview_set')\
                     .annotate(rate_average=Avg('productreview__rate'))\
-                    .all().order_by('-discount_percentage')[:DISCOUNT_PROUDCTS_COUNT]
+                    .order_by('-discount_percentage')[:DISCOUNT_PROUDCTS_COUNT]
 
             products_list = [{
                 'id'                  : product.id,
